@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         webSettings.setDomStorageEnabled(true); // Enable storage for better compatibility
 
         webView.setWebViewClient(new WebViewClient()); // Keep navigation inside the app
-        webView.loadUrl("https://aixka.pages.dev"); // Your website URL
+        webView.loadUrl("https://aixks.pages.dev"); // Your website URL
     }
 
     @Override
