@@ -1,10 +1,13 @@
-name: Build Minimal Android APK
+name: Build Android APK
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
   workflow_dispatch:
+
+permissions:
+  contents: write   # 🔴 REQUIRED for GitHub Releases
 
 jobs:
   build:
@@ -42,11 +45,13 @@ jobs:
           mkdir -p release
           cp apk/build/outputs/apk/debug/*.apk release/KS-AI.apk
 
-      - name: Create GitHub Release & Upload APK
-        uses: softprops/action-gh-release@v2
+      - name: Upload to GitHub Release
+        if: always()
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: KS AI Build v1.0.${{ github.run_number }}
+          tag_name: latest
+          name: "KS AI – Latest APK"
+          body: "Automatically built APK from GitHub Actions"
           files: release/KS-AI.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
