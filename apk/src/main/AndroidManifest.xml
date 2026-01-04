@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="KS AI"
+        android:label="𝑲𝑺 𝑨𝑰"
         android:icon="@mipmap/logo"
         android:roundIcon="@mipmap/logo"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
