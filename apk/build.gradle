@@ -11,11 +11,11 @@ buildscript {
 apply plugin: "com.android.application"
 
 android {
-    namespace "pl.czak.minimal"
+    namespace "com.kswarrior.ai"
     compileSdk 34
 
     defaultConfig {
-        applicationId "pl.czak.minimal"
+        applicationId "com.kswarrior.ai"
         minSdk 21
         targetSdk 34
         versionCode 1
