@@ -1,14 +1,22 @@
-plugins {
-    id 'com.android.application'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.2.2"
+    }
 }
 
+apply plugin: "com.android.application"
+
 android {
-    namespace "com.kswarrior.ai"
+    namespace "pl.czak.minimal"
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.kswarrior.ai"
-        minSdk 23
+        applicationId "pl.czak.minimal"
+        minSdk 21
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -19,6 +27,11 @@ android {
             debuggable true
         }
     }
+}
+
+repositories {
+    google()
+    mavenCentral()
 }
 
 dependencies {
