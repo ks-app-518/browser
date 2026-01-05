@@ -1,0 +1,47 @@
+name: Build Windows EXE
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 🔴 REQUIRED for GitHub Releases
+
+jobs:
+  build:
+    runs-on: windows-latest   # 🔴 Windows runner REQUIRED
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: exe
+        run: npm install
+
+      - name: Build Windows EXE
+        working-directory: exe
+        run: npm run build
+
+      - name: Prepare EXE
+        run: |
+          mkdir release
+          copy exe\dist\*.exe release\KS-AI.exe
+
+      - name: Upload to GitHub Release
+        if: always()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "KS AI – Latest APK"
+          body: "Automatically built APK from GitHub Actions"
+          files: release/KS-AI.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
