@@ -25,19 +25,19 @@ class MainActivity : AppCompatActivity() {
 
         // Set up search functionality
         search_button.setOnClickListener {
-            performSearch()
+            performSearch(webView)
         }
 
         search_bar.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                performSearch()
+                performSearch(webView)
                 return@setOnKeyListener true
             }
             false
         }
     }
 
-    private fun performSearch() {
+    private fun performSearch(webView: WebView) {
         val query = search_bar.text.toString().trim()
         if (query.isNotEmpty()) {
             val url = if (query.contains("http://") || query.contains("https://")) {
@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "https://www.google.com/search?q=$query"
             }
-            webview.loadUrl(url)
+            webView.loadUrl(url)
         }
     }
 }
