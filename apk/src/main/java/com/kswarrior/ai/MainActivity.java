@@ -1,4 +1,4 @@
-package com.kswarrior.ai;
+package com.kswarrior.browser;
 
 import android.app.Activity;
 import android.os.Bundle;
