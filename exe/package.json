@@ -1,0 +1,24 @@
+{
+  "name": "ks-ai",
+  "version": "1.0.0",
+  "description": "KS AI Windows App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.kswarrior.ai",
+    "productName": "KS AI",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
