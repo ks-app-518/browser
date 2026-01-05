@@ -1,35 +1,51 @@
-package com.kswarrior.browser;
+package com.kswarrior.browser
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.os.Bundle
+import android.view.KeyEvent
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_main.*
 
-public class MainActivity extends Activity {
-    private WebView webView;
+class MainActivity : AppCompatActivity() {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        webView = new WebView(this);
-        setContentView(webView);
+        // Initialize WebView
+        val webView: WebView = findViewById(R.id.webview)
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.webViewClient = WebViewClient()
 
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true); // Enable JS if your site needs it
-        webSettings.setDomStorageEnabled(true); // Enable storage for better compatibility
+        // Load a default URL
+        webView.loadUrl("https://www.google.com")
 
-        webView.setWebViewClient(new WebViewClient()); // Keep navigation inside the app
-        webView.loadUrl("https://ks-browser.pages.dev"); // Your website URL
+        // Set up search functionality
+        search_button.setOnClickListener {
+            performSearch()
+        }
+
+        search_bar.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                performSearch()
+                return@setOnKeyListener true
+            }
+            false
+        }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack(); // Navigate back inside WebView
-        } else {
-            super.onBackPressed();
+    private fun performSearch() {
+        val query = search_bar.text.toString().trim()
+        if (query.isNotEmpty()) {
+            val url = if (query.contains("http://") || query.contains("https://")) {
+                query
+            } else {
+                "https://www.google.com/search?q=$query"
+            }
+            webview.loadUrl(url)
         }
     }
 }
