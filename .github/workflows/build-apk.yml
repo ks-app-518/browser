@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 🔴 REQUIRED for GitHub Releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Gradle 8.7 (local)
+        run: |
+          wget https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip gradle-8.7-bin.zip
+          echo "$PWD/gradle-8.7/bin" >> $GITHUB_PATH
+          gradle --version
+
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Build Debug APK
+        working-directory: apk
+        run: gradle assembleDebug
+
+      - name: Prepare APK
+        run: |
+          mkdir -p release
+          cp apk/build/outputs/apk/debug/*.apk release/KS-Browser.apk
+
+      - name: Upload to GitHub Release
+        if: always()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "KS Browser - Latest Version"
+          body: "Automatically built APK from GitHub Actions"
+          files: release/KS-Browser.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
