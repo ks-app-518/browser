@@ -15,7 +15,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
@@ -27,6 +26,8 @@ public class MainActivity extends Activity {
     private EditText etUrl;
     private ProgressBar progressBar;
     private Set<String> adHosts;
+
+    private String currentDisplayText = "";  // What we show in the bar
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +41,7 @@ public class MainActivity extends Activity {
         initializeAdBlocker();
 
         WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);         // Important: ks.42web.io requires JS
+        webSettings.setJavaScriptEnabled(true);         // Required for ks.42web.io
         webSettings.setDomStorageEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
@@ -58,56 +59,56 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Handle Enter / Go in keyboard
-        etUrl.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_GO ||
-                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                    loadUrlOrSearch();
-                    return true;
-                }
-                return false;
+        // Handle Enter / Go
+        etUrl.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO ||
+                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                loadUrlOrSearch();
+                return true;
             }
+            return false;
         });
 
-        // Auto-load your site on start (only top bar visible before load)
-        etUrl.setText("https://ks.42web.io");  // Show in address bar
+        // Start with your site + empty address bar
+        currentDisplayText = "";
+        etUrl.setText(currentDisplayText);
         webView.loadUrl("https://ks.42web.io");
     }
 
     private void loadUrlOrSearch() {
-        loadUrlOrSearch(etUrl.getText().toString().trim());
-    }
-
-    private void loadUrlOrSearch(String input) {
+        String input = etUrl.getText().toString().trim();
         if (TextUtils.isEmpty(input)) return;
 
-        String url = input.trim();
+        // Remember what user typed → show this in bar
+        currentDisplayText = input;
+        etUrl.setText(currentDisplayText);
+        etUrl.setSelection(currentDisplayText.length());
 
-        // If not looks like URL → make it Google search
-        if (!isProbablyUrl(url)) {
-            url = "https://www.google.com/search?q=" + url.replace(" ", "+");
+        String urlToLoad;
+
+        if (!isProbablyUrl(input)) {
+            // It's a search → load Google but show only user text in bar
+            urlToLoad = "https://www.google.com/search?q=" + input.replace(" ", "+");
         } else {
-            // Add https:// if no protocol
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                url = "https://" + url;
+            // It's a URL → add https if needed
+            urlToLoad = input;
+            if (!urlToLoad.startsWith("http://") && !urlToLoad.startsWith("https://")) {
+                urlToLoad = "https://" + urlToLoad;
             }
+            currentDisplayText = urlToLoad;  // For real URLs we show full cleaned URL
+            etUrl.setText(currentDisplayText);
         }
 
-        etUrl.setText(url);
-        etUrl.setSelection(url.length());
-
-        webView.loadUrl(url);
+        webView.loadUrl(urlToLoad);
     }
 
     private boolean isProbablyUrl(String text) {
-        text = text.toLowerCase();
-        return text.contains(".") ||
-               text.startsWith("http") ||
+        text = text.toLowerCase().trim();
+        return text.startsWith("http") ||
                text.startsWith("www.") ||
                text.contains("://") ||
-               text.endsWith(".com") || text.endsWith(".io") || text.endsWith(".org");
+               (text.contains(".") && (text.endsWith(".com") || text.endsWith(".io") ||
+                text.endsWith(".org") || text.endsWith(".net") || text.endsWith(".in")));
     }
 
     private void initializeAdBlocker() {
@@ -119,7 +120,7 @@ public class MainActivity extends Activity {
         adHosts.add("amazon-adsystem.com");
         adHosts.add("facebook.com");
         adHosts.add("twitter.com");
-        // Add more domains as needed
+        // Add more if needed
     }
 
     private class AdBlockingWebViewClient extends WebViewClient {
@@ -165,7 +166,13 @@ public class MainActivity extends Activity {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            etUrl.setText(url); // Sync address bar
+            // Only update bar if it's a real navigation (not search)
+            // During search we keep the clean query text
+            if (!url.contains("google.com/search")) {
+                currentDisplayText = url;
+                etUrl.setText(currentDisplayText);
+                etUrl.setSelection(currentDisplayText.length());
+            }
         }
 
         @Override
