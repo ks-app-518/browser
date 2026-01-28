@@ -4,14 +4,26 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Top bar with address/search -->
+    <!-- Top bar: KS + search box -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#F0F0F0">
+        android:padding="10dp"
+        android:background="#F0F0F0"
+        android:gravity="center_vertical">
 
+        <!-- KS label (brand name) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KS"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:paddingEnd="12dp" />
+
+        <!-- Search / address box -->
         <EditText
             android:id="@+id/et_url"
             android:layout_width="0dp"
@@ -26,30 +38,18 @@
             android:padding="12dp"
             android:background="@drawable/edittext_background" />
 
-        <!-- Optional: Go button (you can remove if only using Enter key) -->
-        <!--
-        <Button
-            android:id="@+id/btn_go"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Go"
-            android:layout_marginStart="8dp" />
-        -->
-
     </LinearLayout>
 
-    <!-- Progress bar (horizontal, thin like Chrome) -->
+    <!-- Thin progress bar -->
     <ProgressBar
         android:id="@+id/progress_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="3dp"
-        android:progress="0"
         android:max="100"
-        android:indeterminate="false"
         android:visibility="gone" />
 
-    <!-- WebView takes remaining space -->
+    <!-- WebView fills the rest -->
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
