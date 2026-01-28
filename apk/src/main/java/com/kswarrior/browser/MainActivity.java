@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
         initializeAdBlocker();
 
         WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
+        webSettings.setJavaScriptEnabled(true);         // Important: ks.42web.io requires JS
         webSettings.setDomStorageEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Handle Enter key in EditText
+        // Handle Enter / Go in keyboard
         etUrl.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -71,8 +71,9 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Optional: initial load
-        loadUrlOrSearch("https://www.google.com");
+        // Auto-load your site on start (only top bar visible before load)
+        etUrl.setText("https://ks.42web.io");  // Show in address bar
+        webView.loadUrl("https://ks.42web.io");
     }
 
     private void loadUrlOrSearch() {
@@ -82,19 +83,18 @@ public class MainActivity extends Activity {
     private void loadUrlOrSearch(String input) {
         if (TextUtils.isEmpty(input)) return;
 
-        String url = input;
+        String url = input.trim();
 
-        // If it doesn't look like a URL, treat as search query
-        if (!isProbablyUrl(input)) {
-            url = "https://www.google.com/search?q=" + input.replace(" ", "+");
+        // If not looks like URL → make it Google search
+        if (!isProbablyUrl(url)) {
+            url = "https://www.google.com/search?q=" + url.replace(" ", "+");
         } else {
-            // Add https:// if missing protocol
+            // Add https:// if no protocol
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 url = "https://" + url;
             }
         }
 
-        // Update EditText to show the final URL (good UX)
         etUrl.setText(url);
         etUrl.setSelection(url.length());
 
@@ -102,11 +102,12 @@ public class MainActivity extends Activity {
     }
 
     private boolean isProbablyUrl(String text) {
-        // Very simple check — improve if needed
+        text = text.toLowerCase();
         return text.contains(".") ||
                text.startsWith("http") ||
                text.startsWith("www.") ||
-               text.contains("://");
+               text.contains("://") ||
+               text.endsWith(".com") || text.endsWith(".io") || text.endsWith(".org");
     }
 
     private void initializeAdBlocker() {
@@ -118,7 +119,7 @@ public class MainActivity extends Activity {
         adHosts.add("amazon-adsystem.com");
         adHosts.add("facebook.com");
         adHosts.add("twitter.com");
-        // Add more as needed
+        // Add more domains as needed
     }
 
     private class AdBlockingWebViewClient extends WebViewClient {
@@ -128,11 +129,8 @@ public class MainActivity extends Activity {
             String url = request.getUrl().toString().toLowerCase();
             String host = request.getUrl().getHost();
 
-            if (host != null) {
-                host = host.toLowerCase();
-                if (adHosts.contains(host)) {
-                    return createEmptyResponse();
-                }
+            if (host != null && adHosts.contains(host.toLowerCase())) {
+                return createEmptyResponse();
             }
 
             if (url.contains("/ads/") || url.contains("ad.") || url.contains("doubleclick") || url.endsWith(".ad.js")) {
@@ -142,7 +140,6 @@ public class MainActivity extends Activity {
             return super.shouldInterceptRequest(view, request);
         }
 
-        // For older Android versions
         @SuppressWarnings("deprecation")
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
@@ -168,7 +165,7 @@ public class MainActivity extends Activity {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            etUrl.setText(url); // Update address bar
+            etUrl.setText(url); // Sync address bar
         }
 
         @Override
