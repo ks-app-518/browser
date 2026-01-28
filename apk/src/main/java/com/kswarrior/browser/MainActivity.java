@@ -1,4 +1,4 @@
-package com.kswarrior.ai;
+package com.kswarrior.browser;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
         webSettings.setDomStorageEnabled(true); // Enable storage for better compatibility
 
         webView.setWebViewClient(new WebViewClient()); // Keep navigation inside the app
-        webView.loadUrl("https://aixks.pages.dev"); // Your website URL
+        webView.loadUrl("https://www.google.com"); // Your website URL
     }
 
     @Override
