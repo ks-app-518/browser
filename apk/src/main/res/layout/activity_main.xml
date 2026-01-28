@@ -1,27 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <!-- Top Bar / Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/top_toolbar"
+    <!-- Top bar with address/search -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="#2196F3"
-        android:elevation="4dp"
-        android:title="𝑲𝑺 𝑩𝒓𝒐𝒘𝒔𝒆𝒓"
-        android:titleTextColor="#FFFFFF"
-        app:titleCentered="true" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#F0F0F0">
 
-    <!-- Main Content -->
-    <TextView
+        <EditText
+            android:id="@+id/et_url"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Search or enter URL"
+            android:imeOptions="actionGo"
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/edittext_background" />
+
+        <!-- Optional: Go button (you can remove if only using Enter key) -->
+        <!--
+        <Button
+            android:id="@+id/btn_go"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go"
+            android:layout_marginStart="8dp" />
+        -->
+
+    </LinearLayout>
+
+    <!-- Progress bar (horizontal, thin like Chrome) -->
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="𝑲𝑺 𝑩𝒓𝒐𝒘𝒔𝒆𝒓"
-        android:textSize="24sp"
-        android:gravity="center" />
+        android:layout_height="3dp"
+        android:progress="0"
+        android:max="100"
+        android:indeterminate="false"
+        android:visibility="gone" />
+
+    <!-- WebView takes remaining space -->
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </LinearLayout>
