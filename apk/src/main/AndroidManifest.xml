@@ -1,10 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.kswarrior.ai">
+    package="com.kswarrior.browser">
 
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="𝑲𝑺 ∞ 𝑨𝑰"
+        android:label="𝑲𝑺 𝑩𝒓𝒐𝒘𝒔𝒆𝒓"
         android:icon="@mipmap/logo"
         android:roundIcon="@mipmap/logo"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
