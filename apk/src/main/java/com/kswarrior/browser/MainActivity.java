@@ -2,10 +2,13 @@ package com.kswarrior.browser;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -14,7 +17,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
@@ -27,21 +32,83 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private Set<String> adHosts;
 
-    private String currentDisplayText = "";  // What we show in the bar
+    private String currentDisplayText = "";  // What we show in address bar
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webview);
-        etUrl = findViewById(R.id.et_url);
-        progressBar = findViewById(R.id.progress_bar);
+        // Create root LinearLayout (vertical)
+        LinearLayout rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // 1. Top bar: KS label + EditText
+        LinearLayout topBar = new LinearLayout(this);
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setPadding(16, 12, 16, 12);
+        topBar.setBackgroundColor(Color.parseColor("#F0F0F0"));
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+
+        // KS TextView (brand)
+        TextView ksLabel = new TextView(this);
+        ksLabel.setText("KS");
+        ksLabel.setTextSize(24);
+        ksLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+        ksLabel.setTextColor(Color.BLACK);
+        ksLabel.setPadding(0, 0, 16, 0);
+        topBar.addView(ksLabel);
+
+        // Address / Search EditText
+        etUrl = new EditText(this);
+        LinearLayout.LayoutParams etParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        etUrl.setLayoutParams(etParams);
+        etUrl.setHint("Search or enter URL");
+        etUrl.setImeOptions(EditorInfo.IME_ACTION_GO);
+        etUrl.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        etUrl.setSingleLine(true);
+        etUrl.setTextColor(Color.BLACK);
+        etUrl.setTextSize(16);
+        etUrl.setPadding(16, 12, 16, 12);
+        etUrl.setBackgroundColor(Color.WHITE);
+        // Simple rounded background (you can create drawable or use shape programmatically)
+        etUrl.setBackgroundColor(Color.WHITE); // for now plain white
+
+        topBar.addView(etUrl);
+
+        rootLayout.addView(topBar);
+
+        // 2. ProgressBar (thin horizontal)
+        progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progressBar.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                4));  // thin height
+        progressBar.setMax(100);
+        progressBar.setVisibility(View.GONE);
+        rootLayout.addView(progressBar);
+
+        // 3. WebView (fills remaining space)
+        webView = new WebView(this);
+        webView.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0, 1f));  // weight=1 to fill rest
+
+        rootLayout.addView(webView);
+
+        // Set the root layout as content
+        setContentView(rootLayout);
+
+        // ────────────────────────────────────────
+        // Rest is same as before: settings, listeners, adblock, etc.
+        // ────────────────────────────────────────
 
         initializeAdBlocker();
 
         WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);         // Required for ks.42web.io
+        webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
@@ -59,7 +126,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Handle Enter / Go
+        // Handle Enter / Go in keyboard
         etUrl.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO ||
                 (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -69,17 +136,16 @@ public class MainActivity extends Activity {
             return false;
         });
 
-        // Start with your site + empty address bar
+        // Start with local HTML + empty address bar
         currentDisplayText = "";
         etUrl.setText(currentDisplayText);
-        webView.loadUrl("https://ks.42web.io");
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
     private void loadUrlOrSearch() {
         String input = etUrl.getText().toString().trim();
         if (TextUtils.isEmpty(input)) return;
 
-        // Remember what user typed → show this in bar
         currentDisplayText = input;
         etUrl.setText(currentDisplayText);
         etUrl.setSelection(currentDisplayText.length());
@@ -87,15 +153,13 @@ public class MainActivity extends Activity {
         String urlToLoad;
 
         if (!isProbablyUrl(input)) {
-            // It's a search → load Google but show only user text in bar
             urlToLoad = "https://www.google.com/search?q=" + input.replace(" ", "+");
         } else {
-            // It's a URL → add https if needed
             urlToLoad = input;
             if (!urlToLoad.startsWith("http://") && !urlToLoad.startsWith("https://")) {
                 urlToLoad = "https://" + urlToLoad;
             }
-            currentDisplayText = urlToLoad;  // For real URLs we show full cleaned URL
+            currentDisplayText = urlToLoad;
             etUrl.setText(currentDisplayText);
         }
 
@@ -120,7 +184,6 @@ public class MainActivity extends Activity {
         adHosts.add("amazon-adsystem.com");
         adHosts.add("facebook.com");
         adHosts.add("twitter.com");
-        // Add more if needed
     }
 
     private class AdBlockingWebViewClient extends WebViewClient {
@@ -166,9 +229,7 @@ public class MainActivity extends Activity {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            // Only update bar if it's a real navigation (not search)
-            // During search we keep the clean query text
-            if (!url.contains("google.com/search")) {
+            if (!url.contains("google.com/search") && !url.startsWith("file:///android_asset/")) {
                 currentDisplayText = url;
                 etUrl.setText(currentDisplayText);
                 etUrl.setSelection(currentDisplayText.length());
