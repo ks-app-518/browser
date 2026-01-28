@@ -1,7 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:text="KS AI"
-    android:textSize="24sp"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"/>
+    android:layout_height="match_parent">
+
+    <!-- Top Bar / Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/top_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#2196F3"
+        android:elevation="4dp"
+        android:title="𝑲𝑺 𝑩𝒓𝒐𝒘𝒔𝒆𝒓"
+        android:titleTextColor="#FFFFFF"
+        app:titleCentered="true" />
+
+    <!-- Main Content -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="𝑲𝑺 𝑩𝒓𝒐𝒘𝒔𝒆𝒓"
+        android:textSize="24sp"
+        android:gravity="center" />
+
+</LinearLayout>
