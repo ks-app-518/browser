@@ -159,7 +159,14 @@ body{
 <h2>BOOKMARKS</h2>
 <div class="h-scroll" id="bookmarkGrid"></div>
 </div>
-
+<script>
+    // Show Android top bar when tapping/focusing the home search box
+search.addEventListener("focus", () => {
+    if (window.AndroidBridge) {
+        AndroidBridge.showAddressBar();
+    }
+});
+</script>
 <script>
 const search = document.getElementById("search");
 const recentGrid = document.getElementById("recentGrid");
