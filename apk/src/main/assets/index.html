@@ -1,52 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KS Browser</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #f0f4f8, #d9e2ec);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #333;
-        }
-        h1 {
-            font-size: 5em;
-            margin: 0;
-            color: #0066cc;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        }
-        p {
-            font-size: 1.6em;
-            margin: 25px 0;
-        }
-        .start-btn {
-            background: #0066cc;
-            color: white;
-            padding: 16px 40px;
-            font-size: 1.4em;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 5px 12px rgba(0,0,0,0.25);
-            transition: all 0.3s;
-        }
-        .start-btn:hover {
-            background: #004d99;
-            transform: translateY(-4px);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KS Browser</title>
+
+<style>
+:root{
+    --bg:#050508;
+    --panel:#0b0e14;
+    --card:#11152a;
+    --red:#ff003c;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+}
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI,system-ui;
+    background:linear-gradient(160deg,#0a0d18,#050508);
+    color:var(--text);
+}
+
+/* LOGO */
+.logo{
+    text-align:center;
+    margin-top:40px;
+}
+.logo .icon{
+    width:70px;height:70px;
+    border:4px solid var(--red);
+    border-radius:50%;
+    margin:0 auto 12px;
+}
+.logo h1{font-weight:600}
+
+/* SEARCH */
+.search-box{
+    width:92%;
+    max-width:520px;
+    margin:25px auto 20px;
+    background:#0c0f1f;
+    border-radius:0px;
+    border-bottom:3px solid var(--red);
+}
+.search-box input{
+    width:100%;
+    padding:16px;
+    font-size:1em;
+    background:none;
+    border:none;
+    outline:none;
+    color:#fff;
+}
+
+/* SECTION */
+.section{
+    margin:22px;
+}
+.section h2{
+    font-size:.85em;
+    letter-spacing:1px;
+    margin-bottom:10px;
+}
+
+/* HORIZONTAL GRID */
+.h-scroll{
+    display:flex;
+    gap:16px;
+    overflow-x:auto;
+    padding-bottom:6px;
+    scroll-behavior:smooth;
+}
+.h-scroll::-webkit-scrollbar{height:6px}
+.h-scroll::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.15);
+    border-radius:10px;
+}
+
+/* TILE */
+.tile{
+    min-width:110px;
+    background:var(--panel);
+    border-radius:14px;
+    padding:14px;
+    text-align:center;
+    cursor:pointer;
+    transition:.3s;
+}
+.tile:hover{
+    transform:translateY(-6px) scale(1.04);
+    box-shadow:0 10px 25px rgba(255,0,60,.35);
+}
+
+.tile img{
+    width:42px;
+    height:42px;
+    border-radius:10px;
+}
+.tile span{
+    display:block;
+    margin-top:6px;
+    font-size:.75em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+</style>
 </head>
+
 <body>
-    <h1>KS</h1>
-    <p>Welcome to KS Browser</p>
-    <button class="start-btn" onclick="window.location='https://www.google.com';">Start Browsing</button>
+
+<div class="logo">
+    <div class="icon"></div>
+    <h1>KS Browser</h1>
+</div>
+
+<div class="search-box">
+<input id="search" placeholder="Search or enter an address">
+</div>
+
+<!-- TOP SITES -->
+<div class="section">
+<h2>TOP SITES</h2>
+<div class="h-scroll" id="topSites">
+    <div class="tile" onclick="go('https://youtube.com')">
+        <img src="https://www.google.com/s2/favicons?domain=youtube.com&sz=64">
+        <span>YouTube</span>
+    </div>
+    <div class="tile" onclick="go('https://discord.com')">
+        <img src="https://www.google.com/s2/favicons?domain=discord.com&sz=64">
+        <span>Discord</span>
+    </div>
+    <div class="tile" onclick="go('https://amazon.com')">
+        <img src="https://www.google.com/s2/favicons?domain=amazon.com&sz=64">
+        <span>Amazon</span>
+    </div>
+    <div class="tile" onclick="go('https://twitch.tv')">
+        <img src="https://www.google.com/s2/favicons?domain=twitch.tv&sz=64">
+        <span>Twitch</span>
+    </div>
+</div>
+</div>
+
+<!-- RECENT -->
+<div class="section">
+<h2>RECENT</h2>
+<div class="h-scroll" id="recentGrid"></div>
+</div>
+
+<!-- BOOKMARKS -->
+<div class="section">
+<h2>BOOKMARKS</h2>
+<div class="h-scroll" id="bookmarkGrid"></div>
+</div>
+
+<script>
+const search = document.getElementById("search");
+const recentGrid = document.getElementById("recentGrid");
+const bookmarkGrid = document.getElementById("bookmarkGrid");
+
+let recents = JSON.parse(localStorage.getItem("recents")) || [];
+let bookmarks = JSON.parse(localStorage.getItem("bookmarks")) || [];
+
+function normalize(url){
+    if(!/^https?:\/\//i.test(url)) return "https://" + url;
+    return url;
+}
+function icon(url){
+    return "https://www.google.com/s2/favicons?sz=64&domain=" + new URL(url).hostname;
+}
+function go(url){
+    addRecent(url);
+    location.href = url;
+}
+
+/* SEARCH */
+search.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){
+        let q = search.value.trim();
+        if(!q) return;
+        let url = q.includes(".")
+            ? normalize(q)
+            : "https://google.com/search?q="+encodeURIComponent(q);
+        go(url);
+    }
+});
+
+/* RECENT (MAX 5) */
+function addRecent(url){
+    recents = recents.filter(r=>r.url!==url);
+    recents.unshift({title:new URL(url).hostname,url});
+    recents = recents.slice(0,5);
+    localStorage.setItem("recents",JSON.stringify(recents));
+    renderRecents();
+}
+
+/* BOOKMARK */
+function addBookmark(url){
+    if(bookmarks.some(b=>b.url===url)) return;
+    bookmarks.push({title:new URL(url).hostname,url});
+    localStorage.setItem("bookmarks",JSON.stringify(bookmarks));
+    renderBookmarks();
+}
+
+/* RENDER */
+function renderRecents(){
+    recentGrid.innerHTML="";
+    recents.forEach(r=>{
+        recentGrid.innerHTML+=`
+        <div class="tile" onclick="go('${r.url}')" ondblclick="addBookmark('${r.url}')">
+            <img src="${icon(r.url)}">
+            <span>${r.title}</span>
+        </div>`;
+    });
+}
+function renderBookmarks(){
+    bookmarkGrid.innerHTML="";
+    bookmarks.forEach(b=>{
+        bookmarkGrid.innerHTML+=`
+        <div class="tile" onclick="go('${b.url}')">
+            <img src="${icon(b.url)}">
+            <span>${b.title}</span>
+        </div>`;
+    });
+}
+
+renderRecents();
+renderBookmarks();
+</script>
+
 </body>
 </html>
