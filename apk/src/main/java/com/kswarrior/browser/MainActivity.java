@@ -2,7 +2,6 @@ package com.kswarrior.browser;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -27,12 +26,15 @@ import java.util.Set;
 
 public class MainActivity extends Activity {
 
+    private static final String HOME_URL = "file:///android_asset/index.html";
+
     private WebView webView;
     private EditText etUrl;
     private ProgressBar progressBar;
 
     private Set<String> adHosts;
     private String currentDisplayText = "";
+    private boolean isOnHome = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,13 +53,13 @@ public class MainActivity extends Activity {
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setPadding(16, 12, 16, 12);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setBackgroundColor(Color.parseColor("#F0F0F0"));
+        topBar.setBackgroundColor(0xFFF0F0F0); // #F0F0F0
 
         TextView ks = new TextView(this);
         ks.setText("KS");
         ks.setTextSize(24);
         ks.setTypeface(null, android.graphics.Typeface.BOLD);
-        ks.setTextColor(Color.BLACK);
+        ks.setTextColor(0xFF000000);
         ks.setPadding(0, 0, 16, 0);
 
         etUrl = new EditText(this);
@@ -68,17 +70,16 @@ public class MainActivity extends Activity {
         etUrl.setSingleLine(true);
         etUrl.setImeOptions(EditorInfo.IME_ACTION_GO);
         etUrl.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
-                           android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        etUrl.setTextColor(Color.BLACK);
+                android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        etUrl.setTextColor(0xFF000000);
         etUrl.setPadding(16, 12, 16, 12);
-        etUrl.setBackgroundColor(Color.WHITE);
+        etUrl.setBackgroundColor(0xFFFFFFFF);
 
         topBar.addView(ks);
         topBar.addView(etUrl);
 
         // ───── Progress Bar ─────
-        progressBar = new ProgressBar(this, null,
-                android.R.attr.progressBarStyleHorizontal);
+        progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progressBar.setLayoutParams(new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 4
         ));
@@ -106,62 +107,102 @@ public class MainActivity extends Activity {
         ws.setDomStorageEnabled(true);
         ws.setUseWideViewPort(true);
         ws.setLoadWithOverviewMode(true);
+        ws.setSupportZoom(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
 
         // ───── Clients ─────
         webView.setWebViewClient(new AdBlockClient());
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int progress) {
-                progressBar.setVisibility(View.VISIBLE);
-                progressBar.setProgress(progress);
-                if (progress == 100) progressBar.setVisibility(View.GONE);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressBar.setProgress(progress);
+                    if (progress == 100) {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                }
+            }
+
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                if (!isOnHome && !TextUtils.isEmpty(title)) {
+                    etUrl.setHint(title);
+                }
             }
         });
 
         // ───── Address Bar Action ─────
         etUrl.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO ||
-                (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER &&
+                            event.getAction() == KeyEvent.ACTION_DOWN)) {
                 loadFromBar();
                 return true;
             }
             return false;
         });
 
-        // ───── Load HOME ─────
-        webView.loadUrl("file:///android_asset/index.html");
+        // ───── Focus listener - optional UX improvement ─────
+        etUrl.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                etUrl.setSelection(etUrl.getText().length());
+                if (isOnHome) {
+                    etUrl.setText("");
+                }
+            }
+        });
+
+        // ───── Load HOME on start ─────
+        goHome();
     }
 
     // ─────────────────────────────
-    // URL / SEARCH LOGIC
+    // Navigation Logic
     // ─────────────────────────────
     private void loadFromBar() {
         String input = etUrl.getText().toString().trim();
-        if (TextUtils.isEmpty(input)) return;
+        if (TextUtils.isEmpty(input)) {
+            goHome();
+            return;
+        }
 
         String url;
         if (isProbablyUrl(input)) {
             url = input.startsWith("http") ? input : "https://" + input;
         } else {
-            url = "https://www.google.com/search?q=" +
-                    input.replace(" ", "+");
+            url = "https://www.google.com/search?q=" + input.replace(" ", "+");
         }
 
         currentDisplayText = url;
-        etUrl.setText(currentDisplayText);
-        etUrl.setSelection(currentDisplayText.length());
+        etUrl.setText(url);
+        etUrl.setSelection(url.length());
+        etUrl.clearFocus();
 
         webView.loadUrl(url);
+        isOnHome = false;
+    }
+
+    private void goHome() {
+        webView.loadUrl(HOME_URL);
+        etUrl.setText("");
+        etUrl.setHint("Search or enter URL");
+        currentDisplayText = "";
+        isOnHome = true;
+        etUrl.clearFocus();
     }
 
     private boolean isProbablyUrl(String t) {
-        t = t.toLowerCase();
+        if (TextUtils.isEmpty(t)) return false;
+        t = t.toLowerCase().trim();
         return t.startsWith("http") ||
-               t.startsWith("www.") ||
-               (t.contains(".") &&
-               (t.endsWith(".com") || t.endsWith(".org") ||
-                t.endsWith(".net") || t.endsWith(".io") ||
-                t.endsWith(".in")));
+                t.startsWith("www.") ||
+                (t.contains(".") &&
+                        (t.endsWith(".com") || t.endsWith(".org") ||
+                                t.endsWith(".net") || t.endsWith(".io") ||
+                                t.endsWith(".in") || t.endsWith(".co") ||
+                                t.endsWith(".app") || t.endsWith(".dev")));
     }
 
     // ─────────────────────────────
@@ -169,62 +210,77 @@ public class MainActivity extends Activity {
     // ─────────────────────────────
     private void initAdBlock() {
         adHosts = new HashSet<>();
+        // You can expand this list significantly
         adHosts.add("googleads.g.doubleclick.net");
         adHosts.add("pagead2.googlesyndication.com");
         adHosts.add("ads.google.com");
         adHosts.add("admob.com");
         adHosts.add("amazon-adsystem.com");
-        adHosts.add("facebook.com");
-        adHosts.add("twitter.com");
+        adHosts.add("adservice.google.com");
+        adHosts.add("pubmatic.com");
+        adHosts.add("casalemedia.com");
     }
 
     private class AdBlockClient extends WebViewClient {
 
         @Override
-        public WebResourceResponse shouldInterceptRequest(
-                WebView view, WebResourceRequest request) {
-
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String host = request.getUrl().getHost();
-            String url = request.getUrl().toString().toLowerCase();
+            if (host != null && adHosts.contains(host.toLowerCase())) {
+                return emptyResponse();
+            }
 
-            if (host != null && adHosts.contains(host)) {
-                return empty();
+            String url = request.getUrl().toString().toLowerCase();
+            if (url.contains("/ads/") || url.contains("doubleclick") ||
+                    url.contains("googleadservices") || url.contains("adsbygoogle")) {
+                return emptyResponse();
             }
-            if (url.contains("/ads/") || url.contains("doubleclick")) {
-                return empty();
-            }
+
             return super.shouldInterceptRequest(view, request);
         }
 
-        private WebResourceResponse empty() {
-            return new WebResourceResponse(
-                    "text/plain", "utf-8",
-                    new ByteArrayInputStream(new byte[0])
-            );
+        private WebResourceResponse emptyResponse() {
+            return new WebResourceResponse("text/plain", "utf-8",
+                    new ByteArrayInputStream(new byte[0]));
         }
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            if (!url.startsWith("file:///")) {
+            if (url.startsWith("file:///android_asset/")) {
+                etUrl.setText("");
+                etUrl.setHint("Search or enter URL");
+                isOnHome = true;
+            } else {
                 etUrl.setText(url);
                 etUrl.setSelection(url.length());
+                isOnHome = false;
             }
         }
 
         @Override
-        public boolean shouldOverrideUrlLoading(
-                WebView view, WebResourceRequest request) {
-            view.loadUrl(request.getUrl().toString());
+        public void onPageFinished(WebView view, String url) {
+            if (!url.startsWith("file:///")) {
+                currentDisplayText = url;
+            }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            String url = request.getUrl().toString();
+            view.loadUrl(url);
             return true;
         }
     }
 
     // ─────────────────────────────
-    // BACK
+    // Back Button
     // ─────────────────────────────
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
